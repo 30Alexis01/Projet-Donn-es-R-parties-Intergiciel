@@ -7,41 +7,68 @@ import platform.transport.JarUtils;
 
 public class ClientMain {
     public static void main(String[] args) throws Exception {
-        System.out.println("=== CLIENT AGENT (MULTI-SAUTS) ===");
+        System.out.println("=== CLIENT AGENT (MULTI-SAUTS : BOUCLE) ===");
 
-        // --- CONFIGURATION EN DUR ---
-        // 1. MON IP (Client)
-        String myIp = "192.168.1.20"; // <--- METTRE TON IP ICI
+        // ==========================================
+        // 1. CONFIGURATION DES IP
+        // ==========================================
         
-        // 2. IP DU PREMIER SERVEUR (Le PC de ton Ami 1)
-        String server1Ip = "192.168.1.50"; // <--- METTRE IP PC 1
+        // TON IP (Celle de ta machine, où tournent ce Client ET ton Serveur)
+        String myIp = "192.168.1.215";       // <--- METTRE TON IP ICI
         
-        // 3. IP DU DEUXIÈME SERVEUR (Le PC de ton Ami 2 ou un autre)
-        String server2Ip = "192.168.1.60"; // <--- METTRE IP PC 2
+        // IP DE TON AMI (Le premier saut)
+        String friendIp = "192.168.1.182";   // <--- METTRE IP DE L'AMI
         
-        // Ports (Généralement 2001 partout pour simplifier)
-        int portAgent = 2001; 
+        // ==========================================
+        // 2. CONFIGURATION DES PORTS
+        // ==========================================
+        
+        // Port utilisé par les SERVEURS (Ton ServerMain et celui de ton ami)
+        int portServer = 2000;
+        
+        // Port utilisé par CE CLIENT (Pour ne pas bloquer le port 2000 sur ta machine)
+        int portClient = 2001; 
 
-        // --- Démarrage Réception ---
-        Node myNode = new Node(myIp, 2000);
+        // ==========================================
+        // 3. DÉMARRAGE DE LA RÉCEPTION (CLIENT)
+        // ==========================================
+        // On écoute sur le port 2001 pour recevoir l'agent à la toute fin.
+        Node myNode = new Node(myIp, portClient);
         new AgentServer(myNode.host, myNode.port).start();
+        System.out.println(">> Client prêt à recevoir le retour sur " + myIp + ":" + portClient);
 
-        // --- Préparation de l'Agent ---
+        // ==========================================
+        // 4. PRÉPARATION DE L'AGENT
+        // ==========================================
         StatsAgent agent = new StatsAgent();
-        agent.init("Voyageur", myNode);
-        agent.setMaxLines(5000); // Il lira 5000 lignes sur CHAQUE serveur
+        agent.init("Voyageur", myNode); // Il se souvient qu'il vient de 'myNode' (2001)
+        agent.setMaxLines(5000); 
 
-        // --- CRÉATION DE L'ITINÉRAIRE ---
-        // L'agent va aller physiquement sur server1.
-        // On lui dit : "Quand tu as fini sur server1, va sur server2".
-        agent.addDestination(new Node(server2Ip, portAgent));
+        // ==========================================
+        // 5. CRÉATION DE L'ITINÉRAIRE
+        // ==========================================
+        // Rappel du trajet : MOI(Client) -> AMI -> MOI(Serveur) -> MOI(Client/Retour)
+        
+        // L'agent va partir physiquement vers l'AMI (voir étape 7).
+        // On empile ici les destinations pour la SUITE du voyage.
+        
+        // Après l'ami, il doit aller sur TON SERVEUR (Port 2000)
+        agent.addDestination(new Node(myIp, portServer));
+        
+        // Après ton serveur, il doit revenir sur TON CLIENT (Port 2001) pour afficher les résultats
+        agent.addDestination(new Node(myIp, portClient));
 
-        // Chargement du code
+        // ==========================================
+        // 6. CHARGEMENT DU CODE
+        // ==========================================
         agent.setJarBytes(JarUtils.loadJar("agents/test-agent.jar"));
 
-        // --- DÉPART ---
-        System.out.println("Envoi de l'agent vers le 1er serveur : " + server1Ip);
-        // On l'envoie manuellement au premier point. Ensuite il se débrouille.
-        agent.move(new Node(server1Ip, portAgent));
+        // ==========================================
+        // 7. DÉPART
+        // ==========================================
+        System.out.println(">> Lancement de l'agent vers l'Ami : " + friendIp + ":" + portServer);
+        
+        // Premier saut : On l'envoie chez l'ami (sur son port serveur 2000)
+        agent.move(new Node(friendIp, portServer));
     }
 }
