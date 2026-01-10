@@ -3,14 +3,17 @@ package apps.server;
 import platform.service.NameService;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.util.ArrayList; // Import nécessaire
 import java.util.HashMap;
+import java.util.List;      // Import nécessaire
 import java.util.Map;
 
 public class CsvNameService implements NameService {
 
-    // Structure de données : Map<Année, Map<Prénom, Nombre>>
-    // Exemple : 1900 -> { "MARIE" -> 450, "JEAN" -> 300 }
     private final Map<Integer, Map<String, Integer>> database = new HashMap<>();
+    
+    // NOUVEAU : Une liste simple pour accéder aux données par numéro de ligne
+    private final List<Integer> rawCounts = new ArrayList<>();
 
     public CsvNameService(String csvFilePath) {
         System.out.println("Chargement du fichier CSV : " + csvFilePath + " ...");
@@ -18,39 +21,35 @@ public class CsvNameService implements NameService {
         
         try (BufferedReader br = new BufferedReader(new FileReader(csvFilePath))) {
             String line;
-            // On saute la première ligne si c'est l'entête
-            br.readLine(); 
+            br.readLine(); // Skip header
             
             while ((line = br.readLine()) != null) {
-                // Structure : sexe;preusuel;annais;nombre
                 String[] parts = line.split(";");
                 if (parts.length < 4) continue;
 
                 try {
-                    String name = parts[1].trim().toUpperCase(); // On normalise en MAJ
-                    
-                    // Gestion du cas "XXXX" pour l'année dans certains fichiers INSEE
-                    if (parts[2].equals("XXXX")) continue;
-                    int year = Integer.parseInt(parts[2]);
-                    
+                    String name = parts[1].trim().toUpperCase();
                     int count = Integer.parseInt(parts[3]);
 
-                    // On range dans la Map
-                    database.putIfAbsent(year, new HashMap<>());
-                    Map<String, Integer> namesInYear = database.get(year);
+                    // 1. Remplissage de l'ancienne base (Map)
+                    if (!parts[2].equals("XXXX")) {
+                        int year = Integer.parseInt(parts[2]);
+                        database.putIfAbsent(year, new HashMap<>());
+                        Map<String, Integer> namesInYear = database.get(year);
+                        namesInYear.put(name, namesInYear.getOrDefault(name, 0) + count);
+                    }
                     
-                    // On additionne (cas des prénoms mixtes ou lignes multiples)
-                    namesInYear.put(name, namesInYear.getOrDefault(name, 0) + count);
+                    // 2. NOUVEAU : Remplissage de la liste séquentielle
+                    rawCounts.add(count);
 
-                } catch (NumberFormatException e) {
-                    // Ignorer les lignes malformées
+                } catch (Exception e) {
+                    // Ignorer erreurs
                 }
             }
             long end = System.currentTimeMillis();
-            System.out.println("Base de données chargée en " + (end - start) + "ms (" + database.size() + " années).");
+            System.out.println("Chargé " + rawCounts.size() + " lignes en " + (end - start) + "ms.");
 
         } catch (Exception e) {
-            System.err.println("Erreur de chargement du CSV : " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -58,8 +57,15 @@ public class CsvNameService implements NameService {
     @Override
     public int getCount(int year, String name) {
         if (!database.containsKey(year)) return 0;
-        
-        // On cherche le prénom en MAJuscule
         return database.get(year).getOrDefault(name.toUpperCase(), 0);
+    }
+
+    // NOUVELLE IMPLÉMENTATION
+    @Override
+    public int getCountByLine(int lineNumber) {
+        if (lineNumber < 0 || lineNumber >= rawCounts.size()) {
+            return 0; // Sécurité si on demande une ligne qui n'existe pas
+        }
+        return rawCounts.get(lineNumber);
     }
 }

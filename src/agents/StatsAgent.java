@@ -6,64 +6,49 @@ import platform.service.NameService;
 
 public class StatsAgent extends AgentImpl {
 
-    // Paramètres de la mission
-    private String targetName;
-    private int startYear;
-    private int endYear;
-
-    // Résultat rapporté
-    private int totalCount = 0;
+    // On change les paramètres : juste combien de lignes on veut lire
+    private int maxLinesToRead = 10000;
     
-    // État interne pour savoir si on a fini
+    private long totalCount = 0; // long pour éviter l'overflow si ça devient énorme
     private boolean hasFinished = false;
+    private long executionTime = 0; // Pour mesurer le temps sur place
 
-    // Constructeur vide requis pour la désérialisation
     public StatsAgent() {}
 
-    // Méthode helper pour configurer l'agent avant le départ
-    public void setMission(String targetName, int startYear, int endYear) {
-        this.targetName = targetName;
-        this.startYear = startYear;
-        this.endYear = endYear;
+    public void setMaxLines(int max) {
+        this.maxLinesToRead = max;
     }
 
     @Override
     public void main() throws MoveException {
-        // Si on a fini (donc on est de retour chez le client), on affiche le résultat
         if (hasFinished) {
             System.out.println("---------------------------------------------");
             System.out.println("Rapport de l'Agent " + getName() + " :");
-            System.out.println("Le prénom " + targetName + " a été donné " + totalCount + " fois");
-            System.out.println("entre " + startYear + " et " + endYear + ".");
+            System.out.println("Somme des naissances sur les " + maxLinesToRead + " premières lignes.");
+            System.out.println("Total : " + totalCount);
+            System.out.println("Temps de calcul interne (Serveur) : " + executionTime + " ms");
             System.out.println("---------------------------------------------");
             return;
         }
 
-        // Sinon, on est sur le Serveur : Au boulot !
-        System.out.println("[" + getName() + "] Je commence l'analyse pour '" + targetName + "'...");
+        System.out.println("[" + getName() + "] Je commence le calcul intensif (" + maxLinesToRead + " appels)...");
         
-        // 1. Récupérer le service local
         NameService service = (NameService) getNameServer().get("NameService");
         
-        if (service == null) {
-            System.err.println("[" + getName() + "] Erreur : Service 'NameService' introuvable !");
-        } else {
-            // 2. La boucle "Une par une" (Localement, c'est très rapide)
+        if (service != null) {
             long start = System.currentTimeMillis();
             
-            for (int year = startYear; year <= endYear; year++) {
-                int count = service.getCount(year, targetName);
-                // System.out.println(" - " + year + " : " + count); // Décommente si tu veux du verbeux
-                totalCount += count;
+            // LA BOUCLE INFERNALE (10 000 tours)
+            for (int i = 0; i < maxLinesToRead; i++) {
+                // Appel local (extrêmement rapide)
+                totalCount += service.getCountByLine(i);
             }
             
-            long end = System.currentTimeMillis();
-            System.out.println("[" + getName() + "] Analyse terminée en " + (end - start) + "ms. Résultat provisoire : " + totalCount);
+            executionTime = System.currentTimeMillis() - start;
+            System.out.println("[" + getName() + "] Terminé en " + executionTime + "ms.");
         }
 
-        // 3. On note qu'on a fini et on rentre
         hasFinished = true;
-        System.out.println("[" + getName() + "] Je rentre à la base...");
         back();
     }
 }
