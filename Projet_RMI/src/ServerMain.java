@@ -3,24 +3,25 @@ import java.rmi.registry.Registry;
 
 public class ServerMain {
     public static void main(String[] args) throws Exception {
-        if (args.length < 2) {
-            System.out.println("Usage: java ServerMain <port> <csvPath>");
+        if (args.length < 3) {
+            System.out.println("Usage: java ServerMain <publicIp> <port> <csvPath> ");
             return;
         }
 
-        int port = Integer.parseInt(args[0]);
-        String csvPath = args[1];
 
-        // 1) Démarrer le registre RMI sur ce port
+        String publicIp = args[0];
+        int port = Integer.parseInt(args[1]);
+        String csvPath = args[2];
+        
+
+        // IMPORTANT : l'IP que les stubs vont annoncer aux clients
+        System.setProperty("java.rmi.server.hostname", publicIp);
+
         Registry registry = LocateRegistry.createRegistry(port);
-
-        // 2) Créer l’objet distant
         NameService service = new NameServiceImpl(csvPath);
-
-        // 3) Publier (bind) dans le registre avec un nom
         registry.rebind("NameService", service);
 
-        System.out.println("Server ready on port " + port);
+        System.out.println("Server ready on " + publicIp + ":" + port);
         System.out.println("Bound name: NameService");
     }
 }
