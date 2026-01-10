@@ -12,7 +12,7 @@ public class ClientMain {
 
         // 1. TON IP (Pour le retour)
         // Mets ici ton IP locale (ex: 192.168.1.20)
-        String myIp = "192.168.1.20"; 
+        String myIp = "192.168.1.215"; 
         Node myNode = new Node(myIp, 2000);
         
         AgentServer clientListener = new AgentServer(myNode.host, myNode.port);
@@ -20,7 +20,7 @@ public class ClientMain {
 
         // 2. L'IP DE TON AMI (Serveur)
         // Mets ici l'IP de ton ami (ex: 192.168.1.50)
-        String serverIp = "192.168.1.50";
+        String serverIp = "192.168.1.182";
         Node serverNode = new Node(serverIp, 2001);
 
         // 3. Création de l'agent
@@ -40,3 +40,7 @@ public class ClientMain {
         agent.move(serverNode);
     }
 }
+//compiler : 
+//javac -d bin -sourcepath src src/apps/server/ServerMain.java src/apps/client/*.java src/agents/*.java src/platform/common/*.java src/platform/agent/*.java src/platform/transport/*.java src/platform/server/*.java src/platform/service/*.java
+//lancer : 
+//java -cp bin apps.server.ServerMain 2001
