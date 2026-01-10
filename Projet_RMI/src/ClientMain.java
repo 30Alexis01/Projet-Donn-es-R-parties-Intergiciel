@@ -1,49 +1,51 @@
+import platform.service.NameService;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
 public class ClientMain {
+    public static void main(String[] args) {
+        System.out.println("=== CLIENT RMI (MULTI-SERVEURS) ===");
 
-    public static void main(String[] args) throws Exception {
-        if (args.length < 2) {
-            System.out.println(
-                "Usage: java ClientMain <server_ip> <port> [n]\n" +
-                "  <server_ip> : adresse IP ou hostname du serveur RMI\n" +
-                "  <port>      : port du registre RMI\n" +
-                "  [n]         : nombre de lignes à sommer (optionnel, défaut = toutes)"
-            );
-            return;
+        // --- CONFIGURATION EN DUR ---
+        String server1Ip = "192.168.1.50"; // <--- METTRE IP PC 1
+        String server2Ip = "192.168.1.60"; // <--- METTRE IP PC 2
+        
+        int rmiPort = 1099; // Port standard
+        int linesPerServer = 5000;
+
+        long total = 0;
+        long start = System.currentTimeMillis();
+
+        try {
+            // --- ÉTAPE 1 : Appel Serveur 1 ---
+            System.out.println("Connexion au Serveur 1 (" + server1Ip + ")...");
+            Registry reg1 = LocateRegistry.getRegistry(server1Ip, rmiPort);
+            NameService service1 = (NameService) reg1.lookup("NameService");
+            
+            for (int i = 0; i < linesPerServer; i++) {
+                total += service1.getCountByLine(i);
+            }
+            System.out.println("Serveur 1 terminé.");
+
+            // --- ÉTAPE 2 : Appel Serveur 2 ---
+            System.out.println("Connexion au Serveur 2 (" + server2Ip + ")...");
+            Registry reg2 = LocateRegistry.getRegistry(server2Ip, rmiPort);
+            NameService service2 = (NameService) reg2.lookup("NameService");
+            
+            for (int i = 0; i < linesPerServer; i++) {
+                total += service2.getCountByLine(i);
+            }
+            System.out.println("Serveur 2 terminé.");
+
+        } catch (Exception e) {
+            System.err.println("Erreur RMI : " + e.getMessage());
+            e.printStackTrace();
         }
 
-        String serverIp = args[0];
-        int port = Integer.parseInt(args[1]);
-
-        // Nombre de lignes à sommer
-        int n = -1; // -1 = toutes les lignes
-        if (args.length >= 3) {
-            n = Integer.parseInt(args[2]);
-        }
-
-        // 1) Connexion au registre RMI distant
-        Registry registry = LocateRegistry.getRegistry(serverIp, port);
-
-        // 2) Lookup du service
-        NameService service = (NameService) registry.lookup("NameService");
-
-        // Nombre total de lignes disponibles
-        int max = service.getNbLines();
-        if (n < 0 || n > max) {
-            n = max;
-        }
-
-        long sum = 0;
-
-        long t0 = System.nanoTime();
-        for (int i = 0; i < n; i++) {
-            sum += service.getCountByLine(i); // 1 appel RMI par ligne
-        }
-        long t1 = System.nanoTime();
-
-        System.out.println("Somme des " + n + " premières lignes = " + sum);
-        System.out.println("Time (ms) = " + ((t1 - t0) / 1_000_000));
+        long end = System.currentTimeMillis();
+        System.out.println("----------------------------------");
+        System.out.println("TOTAL FINAL RMI : " + total);
+        System.out.println("TEMPS TOTAL     : " + (end - start) + " ms");
+        System.out.println("----------------------------------");
     }
 }
