@@ -1,4 +1,4 @@
-import platform.service.NameService;
+
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
@@ -7,8 +7,8 @@ public class ClientMain {
         System.out.println("=== CLIENT RMI (MULTI-SERVEURS) ===");
 
         // --- CONFIGURATION EN DUR ---
-        String server1Ip = "192.168.1.50"; // <--- METTRE IP PC 1
-        String server2Ip = "192.168.1.60"; // <--- METTRE IP PC 2
+        String server1Ip = "192.168.1.215"; // <--- METTRE IP PC 1
+        String server2Ip = "192.168.1.182"; // <--- METTRE IP PC 2
         
         int rmiPort = 1099; // Port standard
         int linesPerServer = 5000;
