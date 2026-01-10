@@ -2,30 +2,38 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
 public class ClientMain {
+
     public static void main(String[] args) throws Exception {
         if (args.length < 2) {
-            System.out.println("Usage: java ClientMain <host> <port> [n]");
+            System.out.println(
+                "Usage: java ClientMain <server_ip> <port> [n]\n" +
+                "  <server_ip> : adresse IP ou hostname du serveur RMI\n" +
+                "  <port>      : port du registre RMI\n" +
+                "  [n]         : nombre de lignes à sommer (optionnel, défaut = toutes)"
+            );
             return;
         }
 
-        String host = args[0];
+        String serverIp = args[0];
         int port = Integer.parseInt(args[1]);
 
-        // nombre de lignes à sommer (par défaut 10000)
-        int n=0;
+        // Nombre de lignes à sommer
+        int n = -1; // -1 = toutes les lignes
         if (args.length >= 3) {
             n = Integer.parseInt(args[2]);
         }
 
-        // 1) récupérer le registry
-        Registry registry = LocateRegistry.getRegistry(host, port);
+        // 1) Connexion au registre RMI distant
+        Registry registry = LocateRegistry.getRegistry(serverIp, port);
 
-        // 2) lookup -> stub
+        // 2) Lookup du service
         NameService service = (NameService) registry.lookup("NameService");
 
-        // Option : si tu veux éviter de dépasser, tu peux borner avec le nb réel
+        // Nombre total de lignes disponibles
         int max = service.getNbLines();
-        if (n > max) n = max;
+        if (n < 0 || n > max) {
+            n = max;
+        }
 
         long sum = 0;
 
@@ -36,7 +44,6 @@ public class ClientMain {
         long t1 = System.nanoTime();
 
         System.out.println("Somme des " + n + " premières lignes = " + sum);
-        // si tu veux aussi en ms (optionnel)
         System.out.println("Time (ms) = " + ((t1 - t0) / 1_000_000));
     }
 }
