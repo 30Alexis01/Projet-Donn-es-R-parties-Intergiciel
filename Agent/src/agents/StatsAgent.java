@@ -8,9 +8,16 @@ import java.util.LinkedList;
 
 public class StatsAgent extends AgentImpl {
 
+    // --- CONFIG ---
     private int maxLinesToRead = 10;
+    
+    // --- ÉTAT ---
     private long totalCount = 0;
-    private boolean isFinished = false;
+    
+    // NOUVEL ÉTAT : Permet de savoir si on vient d'arriver à la maison
+    private boolean returning = false; 
+
+    // File d'attente des étapes SUIVANTES
     private LinkedList<Node> itinerary = new LinkedList<>();
 
     public StatsAgent() {}
@@ -19,39 +26,67 @@ public class StatsAgent extends AgentImpl {
 
     @Override
     public void main() throws MoveException {
-        // CAS 1 : RETOUR À LA MAISON (FIN)
-        if (isFinished) {
-            // On ne print rien pour ne pas polluer le CSV
-            // On signale au ClientMain qu'on est arrivé via le verrou
+        
+        // ==================================================
+        // PHASE 1 : ARRIVÉE À LA MAISON (FIN DE MISSION)
+        // ==================================================
+        if (returning) {
+            // Si 'returning' est vrai, c'est qu'on vient d'exécuter back() et qu'on est arrivés.
             try {
-                // Utilisation de la Réflexion pour éviter les erreurs de compilation/linkage sur le serveur
+                // On réveille le ClientMain via Réflexion
                 Class<?> clazz = Class.forName("apps.client.ClientMain");
                 java.lang.reflect.Field lockField = clazz.getField("lock");
-                Object lock = lockField.get(null); // accès au champ static
+                Object lock = lockField.get(null);
+                
+                System.out.println(">>> AGENT RENTRÉ AVEC SUCCÈS ! TOTAL = " + totalCount);
                 
                 synchronized (lock) {
-                    lock.notify(); // RÉVEIL DU CLIENT !
+                    lock.notify();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            return;
+            return; // Arrêt complet de l'agent
         }
 
-        // CAS 2 : TRAVAIL (identique avant)
-        NameService service = (NameService) getNameServer().get("NameService");
-        if (service != null) {
-            for (int i = 0; i < maxLinesToRead; i++) {
-                totalCount += service.getCountByLine(i);
+        // ==================================================
+        // PHASE 2 : TRAVAIL (Sur un serveur distant)
+        // ==================================================
+        System.out.println("[" + getName() + "] Je travaille sur " + getNameServer().toString()); // Debug simple
+        
+        try {
+            // On tente de récupérer le service, mais on ne plante pas si absent
+            Object serviceObj = getNameServer().get("NameService");
+            if (serviceObj instanceof NameService) {
+                NameService service = (NameService) serviceObj;
+                long subTotal = 0;
+                for (int i = 0; i < maxLinesToRead; i++) {
+                    subTotal += service.getCountByLine(i);
+                }
+                totalCount += subTotal;
+            } else {
+                System.out.println("   -> Pas de NameService ici, je continue.");
             }
+        } catch (Exception e) {
+            System.err.println("   -> Erreur durant le travail : " + e.getMessage());
         }
 
-        // CAS 3 : NAVIGATION (identique avant)
+        // ==================================================
+        // PHASE 3 : NAVIGATION
+        // ==================================================
         if (!itinerary.isEmpty()) {
+            // S'il reste des étapes, on y va
             Node nextHop = itinerary.removeFirst();
+            System.out.println("[" + getName() + "] Je pars vers l'étape suivante : " + nextHop.host);
             move(nextHop);
         } else {
-            isFinished = true;
+            // Plus d'étape ? C'est l'heure de rentrer.
+            System.out.println("[" + getName() + "] Itinéraire terminé. RETOUR BASE (" + getOrigin().host + ":" + getOrigin().port + ")");
+            
+            // IMPORTANT : On change l'état AVANT de partir
+            this.returning = true;
+            
+            // On rentre à l'origine (définie par agent.init() dans ClientMain)
             back();
         }
     }

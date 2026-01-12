@@ -13,9 +13,9 @@ public class ClientMain {
         System.out.println("=== BENCHMARK AGENT (2 SERVEURS) ===");
 
         // --- CONFIGURATION IP ---
-        String myIp = "192.168.1.215";       // MOI (Client + Retour)
-        String server1Ip = "192.168.1.182";  // PC AMI 1
-        String server2Ip = "192.168.1.183";  // PC AMI 2 (ou réutiliser .182 si c'est le meme PC qui simule 2 srv)
+        String myIp = "172.22.220.103";       // MOI (Client + Retour)
+        String server1Ip = "147.127.133.195";  // PC AMI 1
+        String server2Ip = "172.22.223.116";  // PC AMI 2 (ou réutiliser .182 si c'est le meme PC qui simule 2 srv)
         
         int portServer = 2000;
         int portClient = 2001;
@@ -42,9 +42,7 @@ public class ClientMain {
             // 2. Aller vers Serveur 2 (depuis le 1)
             // 3. Retour vers Moi (depuis le 2)
             
-            agent.addDestination(new Node(server2Ip, portServer)); // Sera visité en 2ème
-            agent.addDestination(myNode);                          // Sera visité en dernier
-            
+            agent.addDestination(new Node(server2Ip, portServer)); // Sera visité après le 1er saut
             // Départ vers la PREMIÈRE destination
             agent.move(new Node(server1Ip, portServer));
 
