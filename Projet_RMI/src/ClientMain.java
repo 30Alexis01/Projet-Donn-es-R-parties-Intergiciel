@@ -1,51 +1,59 @@
-
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
 public class ClientMain {
     public static void main(String[] args) {
-        System.out.println("=== CLIENT RMI (MULTI-SERVEURS) ===");
+        System.out.println("=== BENCHMARK RMI (2 SERVEURS) - LOOKUP EXCLU ===");
 
-        // --- CONFIGURATION EN DUR ---
-        String server1Ip = "192.168.1.215"; // <--- METTRE IP PC 1
-        String server2Ip = "192.168.1.182"; // <--- METTRE IP PC 2
+        // --- CONFIGURATION IP ---
+        String server1Ip = "147.127.135.141"; 
+        String server2Ip = "147.127.135.142"; 
+        int rmiPort = 2003;
         
-        int rmiPort = 1099; // Port standard
-        int linesPerServer = 5000;
+        // Paliers de test
+        int[] steps = {1, 1, 1, 1, 10, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 50000, 100000};
 
-        long total = 0;
-        long start = System.currentTimeMillis();
+        System.out.println("MODE;REQUETES_PAR_SRV;TEMPS_NS");
 
-        try {
-            // --- ÉTAPE 1 : Appel Serveur 1 ---
-            System.out.println("Connexion au Serveur 1 (" + server1Ip + ")...");
-            Registry reg1 = LocateRegistry.getRegistry(server1Ip, rmiPort);
-            NameService service1 = (NameService) reg1.lookup("NameService");
+        for (int n : steps) {
+            long total = 0;
             
-            for (int i = 0; i < linesPerServer; i++) {
-                total += service1.getCountByLine(i);
-            }
-            System.out.println("Serveur 1 terminé.");
+            try {
+                // ==========================================
+                // 1. PRÉPARATION (HORS CHRONO)
+                // ==========================================
+                // On établit toutes les connexions AVANT de déclencher le chronomètre.
+                // Ainsi, on ne mesure que la "communication", pas la "découverte".
+                
+                Registry reg1 = LocateRegistry.getRegistry(server1Ip, rmiPort);
+                NameService service1 = (NameService) reg1.lookup("NameService");
 
-            // --- ÉTAPE 2 : Appel Serveur 2 ---
-            System.out.println("Connexion au Serveur 2 (" + server2Ip + ")...");
-            Registry reg2 = LocateRegistry.getRegistry(server2Ip, rmiPort);
-            NameService service2 = (NameService) reg2.lookup("NameService");
-            
-            for (int i = 0; i < linesPerServer; i++) {
-                total += service2.getCountByLine(i);
-            }
-            System.out.println("Serveur 2 terminé.");
+                Registry reg2 = LocateRegistry.getRegistry(server2Ip, rmiPort);
+                NameService service2 = (NameService) reg2.lookup("NameService");
 
-        } catch (Exception e) {
-            System.err.println("Erreur RMI : " + e.getMessage());
-            e.printStackTrace();
+                // ==========================================
+                // 2. MESURE DE PERFORMANCE (BOUCLE PURE)
+                // ==========================================
+                long start = System.nanoTime(); 
+                
+                // Boucle Serveur 1
+                for (int i = 0; i < n; i++) {
+                    total += service1.getCountByLine(i);
+                }
+
+                // Boucle Serveur 2
+                for (int i = 0; i < n; i++) {
+                    total += service2.getCountByLine(i);
+                }
+
+                long end = System.nanoTime(); 
+                // ==========================================
+
+                System.out.println("RMI;" + n + ";" + (end - start));
+                
+            } catch (Exception e) {
+                System.err.println("Erreur RMI (" + n + ") : " + e.getMessage());
+            }
         }
-
-        long end = System.currentTimeMillis();
-        System.out.println("----------------------------------");
-        System.out.println("TOTAL FINAL RMI : " + total);
-        System.out.println("TEMPS TOTAL     : " + (end - start) + " ms");
-        System.out.println("----------------------------------");
     }
 }

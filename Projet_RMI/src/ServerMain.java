@@ -13,7 +13,7 @@ public class ServerMain {
             // L'IP de la machine où tourne CE serveur.
             // Si c'est ton PC : "192.168.1.20"
             // Si c'est le PC de l'ami 1 : "192.168.1.50"
-            String publicIp = "192.168.1.215"; 
+            String publicIp = "172.22.220.103"; 
 
             // Port RMI standard (doit correspondre au client)
             int port = 1099;

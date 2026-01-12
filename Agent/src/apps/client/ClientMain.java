@@ -15,7 +15,7 @@ public class ClientMain {
         // --- CONFIGURATION IP ---
         String myIp = "172.22.220.103";       // MOI (Client + Retour)
         String server1Ip = "147.127.133.195";  // PC AMI 1
-        String server2Ip = "172.22.223.116";  // PC AMI 2 (ou réutiliser .182 si c'est le meme PC qui simule 2 srv)
+        String server2Ip = "147.127.133.197";  // PC AMI 2 (ou réutiliser .182 si c'est le meme PC qui simule 2 srv)
         
         int portServer = 2000;
         int portClient = 2001;
@@ -26,7 +26,7 @@ public class ClientMain {
         
         byte[] code = JarUtils.loadJar("agents/test-agent.jar");
 
-        int[] steps = {1, 10, 50, 100, 200, 500, 1000, 2000, 5000};
+        int[] steps = {1,1,1,1, 10, 50, 100, 200, 500, 1000, 2000, 5000,10000, 50000, 100000,700000};
         System.out.println("MODE;REQUETES_PAR_SRV;TEMPS_NS");
 
         for (int n : steps) {
@@ -52,7 +52,7 @@ public class ClientMain {
             }
 
             long end = System.nanoTime();
-            System.out.println("AGENT;" + n + ";" + (end - start));
+            System.out.println("AGENT;" + n + ";" + (end - start)/1000000+"ms");
             
             Thread.sleep(500);
         }
