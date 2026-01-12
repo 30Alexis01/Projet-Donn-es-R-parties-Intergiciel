@@ -1,61 +1,120 @@
 package apps.client;
 
-import agents.StatsAgent;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+
+import agents.ZipAgent;
 import platform.common.Node;
 import platform.server.AgentServer;
 import platform.transport.JarUtils;
 
 public class ClientMain {
     
+    // Le verrou partagé avec l'Agent pour la synchronisation (wait/notify)
     public static final Object lock = new Object();
+    
+    // NOUVEAU : La "boîte aux lettres" statique.
+    // L'agent clone qui revient déposera ses données ici.
+    public static byte[] receivedData = null; 
+
+    // CONFIGURATION
+    private static final String SERVER_IP = "127.0.0.1"; 
+    private static final int SERVER_PORT = 2000;
+    
+    // Dossier où on va écrire les fichiers reçus
+    private static final String DEST_DIR = "client_results";
 
     public static void main(String[] args) throws Exception {
-        System.out.println("=== BENCHMARK AGENT (2 SERVEURS) ===");
+        System.out.println("=== BENCHMARK AGENT (SCENARIO ZIP) ===");
 
-        // --- CONFIGURATION IP ---
-        String myIp = "172.22.220.103";       // MOI (Client + Retour)
-        String server1Ip = "147.127.133.195";  // PC AMI 1
-        String server2Ip = "147.127.133.197";  // PC AMI 2 (ou réutiliser .182 si c'est le meme PC qui simule 2 srv)
-        
-        int portServer = 2000;
-        int portClient = 2001;
-
-        // Serveur de réception (pour le retour)
-        Node myNode = new Node(myIp, portClient);
+        // 1. Préparation Client (Serveur de retour)
+        int myPort = 2001;
+        Node myNode = new Node("127.0.0.1", myPort);
         new AgentServer(myNode.host, myNode.port).start();
-        
+
+        // 2. Préparation du dossier de destination
+        File destDir = new File(DEST_DIR);
+        if (!destDir.exists()) destDir.mkdirs();
+
+        // 3. Chargement du code (Jar)
         byte[] code = JarUtils.loadJar("agents/test-agent.jar");
 
-        int[] steps = {1,1,1,1, 10, 50, 100, 200, 500, 1000, 2000, 5000,10000, 50000, 100000,700000};
-        System.out.println("MODE;REQUETES_PAR_SRV;TEMPS_NS");
+        // 4. Définition des paliers de test
+        int[] steps = {1,1,1,1,2,3,4,5,6,7,8,9 ,10, 15,20, 30, 40, 50, 100}; 
 
-        for (int n : steps) {
+        System.out.println("NB_FICHIERS;TEMPS_TOTAL_MS");
+
+        for (int nbFiles : steps) {
+            // Préparation de la liste des fichiers à demander
+            List<String> filesToFetch = new ArrayList<>();
+            for (int i = 0; i < nbFiles; i++) {
+                filesToFetch.add("doc_" + i + ".txt");
+            }
+
+            // IMPORTANT : On vide la boîte aux lettres avant chaque nouvel envoi
+            receivedData = null;
+
             long start = System.nanoTime();
 
-            StatsAgent agent = new StatsAgent();
-            agent.init("Voyageur-" + n, myNode);
-            agent.setMaxLines(n);
+            // A. Initialisation Agent
+            ZipAgent agent = new ZipAgent(filesToFetch);
+            agent.init("JamesBond-" + nbFiles, myNode);
             agent.setJarBytes(code);
-            
-            // --- ITINÉRAIRE (La boucle) ---
-            // 1. Aller vers Serveur 1
-            // 2. Aller vers Serveur 2 (depuis le 1)
-            // 3. Retour vers Moi (depuis le 2)
-            
-            agent.addDestination(new Node(server2Ip, portServer)); // Sera visité après le 1er saut
-            // Départ vers la PREMIÈRE destination
-            agent.move(new Node(server1Ip, portServer));
 
-            // Attente
+            // B. Envoi
+            agent.move(new Node(SERVER_IP, SERVER_PORT));
+
+            // C. Attente du retour
             synchronized (lock) {
                 lock.wait();
             }
 
+            // D. Récupération & Décompression
+            // CORRECTION : On lit la variable statique, pas l'objet agent local
+            byte[] zipData = receivedData; 
+
+            if (zipData != null) {
+                unzip(zipData, destDir);
+            } else {
+                System.err.println("ERREUR : Pas de données reçues pour " + nbFiles + " fichiers !");
+            }
+
+            // --- FIN CHRONO ---
             long end = System.nanoTime();
-            System.out.println("AGENT;" + n + ";" + (end - start)/1000000+"ms");
+            
+            System.out.println(nbFiles + ";" + (end - start) / 1_000_000);
             
             Thread.sleep(500);
         }
+        
+        System.out.println("Fin du benchmark.");
         System.exit(0);
+    }
+
+    /**
+     * Utilitaire pour dézipper les données reçues sur le disque.
+     */
+    private static void unzip(byte[] data, File destDir) {
+        try (ZipInputStream zis = new ZipInputStream(new ByteArrayInputStream(data))) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                File targetFile = new File(destDir, entry.getName());
+                
+                try (FileOutputStream fos = new FileOutputStream(targetFile)) {
+                    byte[] buffer = new byte[1024];
+                    int len;
+                    while ((len = zis.read(buffer)) > 0) {
+                        fos.write(buffer, 0, len);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
