@@ -1,0 +1,11 @@
+# 1. Nettoyage et création du dossier de destination
+rm -rf bin && mkdir bin
+
+# 2. Compilation de TOUT le projet (Plateforme + Apps + Agents) en une fois
+find src -name "*.java" > sources.txt
+javac -d bin @sources.txt
+rm sources.txt
+
+# 3. Création du JAR de l'agent (Indispensable pour le voyage)
+# (On se déplace temporairement pour que le JAR ait la bonne structure interne)
+(cd bin && jar cvf ../agents/test-agent.jar agents/StatsAgent.class)

@@ -6,69 +6,58 @@ import platform.server.AgentServer;
 import platform.transport.JarUtils;
 
 public class ClientMain {
+    
+    public static final Object lock = new Object();
+
     public static void main(String[] args) throws Exception {
-        System.out.println("=== CLIENT AGENT (MULTI-SAUTS : BOUCLE) ===");
+        System.out.println("=== BENCHMARK AGENT (2 SERVEURS) ===");
 
-        // ==========================================
-        // 1. CONFIGURATION DES IP
-        // ==========================================
+        // --- CONFIGURATION IP ---
+        String myIp = "192.168.1.215";       // MOI (Client + Retour)
+        String server1Ip = "192.168.1.182";  // PC AMI 1
+        String server2Ip = "192.168.1.183";  // PC AMI 2 (ou réutiliser .182 si c'est le meme PC qui simule 2 srv)
         
-        // TON IP (Celle de ta machine, où tournent ce Client ET ton Serveur)
-        String myIp = "192.168.1.215";       // <--- METTRE TON IP ICI
-        
-        // IP DE TON AMI (Le premier saut)
-        String friendIp = "192.168.1.182";   // <--- METTRE IP DE L'AMI
-        
-        // ==========================================
-        // 2. CONFIGURATION DES PORTS
-        // ==========================================
-        
-        // Port utilisé par les SERVEURS (Ton ServerMain et celui de ton ami)
         int portServer = 2000;
-        
-        // Port utilisé par CE CLIENT (Pour ne pas bloquer le port 2000 sur ta machine)
-        int portClient = 2001; 
+        int portClient = 2001;
 
-        // ==========================================
-        // 3. DÉMARRAGE DE LA RÉCEPTION (CLIENT)
-        // ==========================================
-        // On écoute sur le port 2001 pour recevoir l'agent à la toute fin.
+        // Serveur de réception (pour le retour)
         Node myNode = new Node(myIp, portClient);
         new AgentServer(myNode.host, myNode.port).start();
-        System.out.println(">> Client prêt à recevoir le retour sur " + myIp + ":" + portClient);
-
-        // ==========================================
-        // 4. PRÉPARATION DE L'AGENT
-        // ==========================================
-        StatsAgent agent = new StatsAgent();
-        agent.init("Voyageur", myNode); // Il se souvient qu'il vient de 'myNode' (2001)
-        agent.setMaxLines(5000); 
-
-        // ==========================================
-        // 5. CRÉATION DE L'ITINÉRAIRE
-        // ==========================================
-        // Rappel du trajet : MOI(Client) -> AMI -> MOI(Serveur) -> MOI(Client/Retour)
         
-        // L'agent va partir physiquement vers l'AMI (voir étape 7).
-        // On empile ici les destinations pour la SUITE du voyage.
-        
-        // Après l'ami, il doit aller sur TON SERVEUR (Port 2000)
-        agent.addDestination(new Node(myIp, portServer));
-        
-        // Après ton serveur, il doit revenir sur TON CLIENT (Port 2001) pour afficher les résultats
-        agent.addDestination(new Node(myIp, portClient));
+        byte[] code = JarUtils.loadJar("agents/test-agent.jar");
 
-        // ==========================================
-        // 6. CHARGEMENT DU CODE
-        // ==========================================
-        agent.setJarBytes(JarUtils.loadJar("agents/test-agent.jar"));
+        int[] steps = {1, 10, 50, 100, 200, 500, 1000, 2000, 5000};
+        System.out.println("MODE;REQUETES_PAR_SRV;TEMPS_NS");
 
-        // ==========================================
-        // 7. DÉPART
-        // ==========================================
-        System.out.println(">> Lancement de l'agent vers l'Ami : " + friendIp + ":" + portServer);
-        
-        // Premier saut : On l'envoie chez l'ami (sur son port serveur 2000)
-        agent.move(new Node(friendIp, portServer));
+        for (int n : steps) {
+            long start = System.nanoTime();
+
+            StatsAgent agent = new StatsAgent();
+            agent.init("Voyageur-" + n, myNode);
+            agent.setMaxLines(n);
+            agent.setJarBytes(code);
+            
+            // --- ITINÉRAIRE (La boucle) ---
+            // 1. Aller vers Serveur 1
+            // 2. Aller vers Serveur 2 (depuis le 1)
+            // 3. Retour vers Moi (depuis le 2)
+            
+            agent.addDestination(new Node(server2Ip, portServer)); // Sera visité en 2ème
+            agent.addDestination(myNode);                          // Sera visité en dernier
+            
+            // Départ vers la PREMIÈRE destination
+            agent.move(new Node(server1Ip, portServer));
+
+            // Attente
+            synchronized (lock) {
+                lock.wait();
+            }
+
+            long end = System.nanoTime();
+            System.out.println("AGENT;" + n + ";" + (end - start));
+            
+            Thread.sleep(500);
+        }
+        System.exit(0);
     }
 }

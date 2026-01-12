@@ -8,60 +8,49 @@ import java.util.LinkedList;
 
 public class StatsAgent extends AgentImpl {
 
-    // --- PARAMÈTRES ---
-    private int maxLinesToRead = 10000;
-    
-    // --- ÉTAT ---
-    private long totalCount = 0;       // La somme cumulée
-    private boolean isFinished = false; // Pour savoir quand afficher le résultat
-
-    // --- ITINÉRAIRE ---
-    // Liste des prochains sauts (File d'attente)
+    private int maxLinesToRead = 10;
+    private long totalCount = 0;
+    private boolean isFinished = false;
     private LinkedList<Node> itinerary = new LinkedList<>();
 
     public StatsAgent() {}
-
-    // Configuration
     public void setMaxLines(int max) { this.maxLinesToRead = max; }
-    
     public void addDestination(Node n) { this.itinerary.add(n); }
 
     @Override
     public void main() throws MoveException {
-        // CAS 1 : RETOUR À LA MAISON
+        // CAS 1 : RETOUR À LA MAISON (FIN)
         if (isFinished) {
-            System.out.println("---------------------------------------------");
-            System.out.println("Rapport Final de " + getName());
-            System.out.println("Mission accomplie sur " + (itinerary.size() + 2) + " sauts."); // +2 pour aller/retour
-            System.out.println("TOTAL CUMULÉ : " + totalCount);
-            System.out.println("---------------------------------------------");
+            // On ne print rien pour ne pas polluer le CSV
+            // On signale au ClientMain qu'on est arrivé via le verrou
+            try {
+                // Utilisation de la Réflexion pour éviter les erreurs de compilation/linkage sur le serveur
+                Class<?> clazz = Class.forName("apps.client.ClientMain");
+                java.lang.reflect.Field lockField = clazz.getField("lock");
+                Object lock = lockField.get(null); // accès au champ static
+                
+                synchronized (lock) {
+                    lock.notify(); // RÉVEIL DU CLIENT !
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             return;
         }
 
-        // CAS 2 : TRAVAIL SUR LE SERVEUR ACTUEL
-        System.out.println("[" + getName() + "] Arrivé ! Je travaille...");
+        // CAS 2 : TRAVAIL (identique avant)
         NameService service = (NameService) getNameServer().get("NameService");
-
         if (service != null) {
-            long subTotal = 0;
             for (int i = 0; i < maxLinesToRead; i++) {
-                subTotal += service.getCountByLine(i);
+                totalCount += service.getCountByLine(i);
             }
-            totalCount += subTotal;
-            System.out.println("[" + getName() + "] Sous-total ici : " + subTotal);
-        } else {
-            System.err.println("[" + getName() + "] Pas de NameService ici !");
         }
 
-        // CAS 3 : DÉCISION DE NAVIGATION
+        // CAS 3 : NAVIGATION (identique avant)
         if (!itinerary.isEmpty()) {
-            // S'il reste une destination, on la prend et on y va
             Node nextHop = itinerary.removeFirst();
-            System.out.println("[" + getName() + "] Hop ! Je pars vers " + nextHop.host);
             move(nextHop);
         } else {
-            // Plus de destination, on rentre à la base (origin)
-            System.out.println("[" + getName() + "] Tournée finie. Je rentre à la base.");
             isFinished = true;
             back();
         }
