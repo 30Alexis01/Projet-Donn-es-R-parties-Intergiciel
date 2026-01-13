@@ -47,10 +47,7 @@ public class StatsAgent extends AgentImpl {
                 e.printStackTrace();
             }
             return; 
-        }
-
-        //cas où l'agent n'est pas en train de revenir
-        System.out.println("[" + getName() + "] Je travaille sur " + getNameServer().toString()); 
+        } 
         
         try {
             // On tente de récupérer le service
