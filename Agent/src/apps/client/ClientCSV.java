@@ -12,7 +12,7 @@ public class ClientCSV {
     // Configuration
     private static final String SERVER_IP = "10.40.17.170";
     private static final int SERVER_PORT = 2000;      // Premier serveur
-    private static final int SERVER_PORT_2 = 2005;    // NOUVEAU : Second serveur
+    private static final int SERVER_PORT_2 = 2005;    // Second serveur
 
     public static void main(String[] args) throws Exception {
         System.out.println("Agent version CSV");
