@@ -4,30 +4,33 @@ import java.rmi.registry.Registry;
 public class ServerMain {
     public static void main(String[] args) {
         try {
+            String ipServeur = "127.0.0.1"; 
+            int port = 2003;
+            
+            String csvPath = "data/prenoms.csv";     
+            String filesPath = "server_files";      
 
-            String IpServeur = "172.22.220.103"; 
-            int port = Integer.parseInt(args[0]);
-            String csvPath = "data/prenoms.csv"; 
+            // Configuration RMI pour que le client puisse nous contacter
+            System.setProperty("java.rmi.server.hostname", ipServeur);
 
-
-            // Confirme l'Ip aux serveurs distants
-            //System.setProperty("java.rmi.server.hostname", IpServeur);
-
-            // Création du registre RMI
+            // 1. Démarrage de l'annuaire RMI (Registry)
             Registry registry = LocateRegistry.createRegistry(port);
+            System.out.println("Registre RMI démarré sur le port " + port);
 
-            // Chargement du service
-            NameService service = new NameServiceImpl(csvPath);
+            // 2. Service 1 : CSV (Existant)
+            NameService nameService = new NameServiceImpl(csvPath);
+            registry.rebind("NameService", nameService);
+            System.out.println("Service 'NameService' (CSV) enregistré.");
 
-            // Enregistrement dans l'annuaire
-            registry.rebind("NameService", service);
+            // 3. Service 2 : Fichiers (Nouveau)
+            RemoteFileService fileService = new RemoteFileServiceImpl(filesPath);
+            registry.rebind("FileServiceRMI", fileService);
+            System.out.println("Service 'FileServiceRMI' (Fichiers) enregistré.");
 
-            System.out.println("Serveur prêt !");
-            System.out.println("IP du Serveur : " + IpServeur);
-            System.out.println("Port : " + port);
+            System.out.println(">> Serveur prêt !");
 
         } catch (Exception e) {
-            System.err.println("Erreur au démarrage du serveur :");
+            System.err.println("Erreur serveur :");
             e.printStackTrace();
         }
     }
