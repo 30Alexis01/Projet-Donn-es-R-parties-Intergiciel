@@ -4,13 +4,11 @@ import java.rmi.registry.Registry;
 public class ServerMain {
     public static void main(String[] args) {
         try {
-            // === CONFIGURATION ===
-            // Adresse IP de ce serveur (à modifier selon ta machine)
-            String ipServeur = "127.0.0.1"; // ou "172.22...."
+            String ipServeur = "127.0.0.1"; 
             int port = 2003;
             
-            String csvPath = "data/prenoms.csv";     // Ton dossier CSV existant
-            String filesPath = "server_files";       // Ton dossier de fichiers (à la racine)
+            String csvPath = "data/prenoms.csv";     
+            String filesPath = "server_files";      
 
             // Configuration RMI pour que le client puisse nous contacter
             System.setProperty("java.rmi.server.hostname", ipServeur);
@@ -20,7 +18,6 @@ public class ServerMain {
             System.out.println("Registre RMI démarré sur le port " + port);
 
             // 2. Service 1 : CSV (Existant)
-            // (Assure-toi que NameServiceImpl est bien importé ou dans le même package)
             NameService nameService = new NameServiceImpl(csvPath);
             registry.rebind("NameService", nameService);
             System.out.println("Service 'NameService' (CSV) enregistré.");
