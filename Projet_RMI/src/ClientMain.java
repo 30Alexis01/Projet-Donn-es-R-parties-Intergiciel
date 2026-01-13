@@ -3,7 +3,7 @@ import java.rmi.registry.Registry;
 
 public class ClientMain {
     public static void main(String[] args) {
-        System.out.println("=== RMI===");
+        System.out.println(" RMI SCENARIO CSV");
 
         String server1Ip = "172.22.223.116"; 
         String server2Ip = "172.22.223.116"; 

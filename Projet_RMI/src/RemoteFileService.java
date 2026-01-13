@@ -9,4 +9,6 @@ public interface RemoteFileService extends Remote {
      * @throws RemoteException Obligatoire pour RMI
      */
     byte[] downloadFile(String fileName) throws RemoteException;
+
+    void printServer(String message) throws RemoteException;
 }

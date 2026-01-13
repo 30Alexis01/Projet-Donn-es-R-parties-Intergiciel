@@ -1,20 +1,21 @@
 package platform.transport;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
 
-/**
- * Outils pour lire un fichier JAR en mémoire (byte[]).
- * Simple : on lit tout le fichier d'un coup.
- */
+
+ //lit un jar  et extrait les classes sous forme de bytes
+ 
 public class JarUtils {
 
-    /**
-     * Charge un fichier JAR depuis un chemin et retourne son contenu en bytes.
-     *
-     * @param jarPath chemin du fichier .jar (ex: "agents/agent.jar")
-     */
+    // Lit un fichier jar et renvoie son contenu sous forme de tableau d'octets
     public static byte[] loadJar(String jarPath) throws IOException {
         File f = new File(jarPath);
 
@@ -29,55 +30,59 @@ public class JarUtils {
 
         byte[] bytes = new byte[(int) len];
 
-        FileInputStream in = new FileInputStream(f);
-        try {
-            int offset = 0;
-            while (offset < bytes.length) {
-                int r = in.read(bytes, offset, bytes.length - offset);
-                if (r == -1) break;
-                offset += r;
+        // Lecture complète du fichier 
+        try (FileInputStream in = new FileInputStream(f)) {
+            int bytesRead = 0;
+
+            while (bytesRead < bytes.length) {
+                int numberOfBytesRead = in.read(bytes,bytesRead,bytes.length - bytesRead);
+
+                if (numberOfBytesRead == -1) {
+                    break;
+                }
+
+            bytesRead += numberOfBytesRead;
             }
-            if (offset != bytes.length) {
-                throw new IOException("Could not read full jar (read " + offset + " / " + bytes.length + ")");
+
+            if (bytesRead != bytes.length) {
+                throw new IOException("Could not read full jar (read " + bytesRead + " / " + bytes.length + ")");
             }
-        } finally {
-            in.close();
         }
 
         return bytes;
     }
 
-    // ... imports nécessaires : java.io.ByteArrayInputStream, java.io.ByteArrayOutputStream, java.util.jar.JarInputStream, java.util.jar.JarEntry, java.util.HashMap, java.util.Map
+    //Extrait les classes d'un JAR et renvoie une map : "pkg.Classe" -> bytecode
+    public static Map<String, byte[]> extractClasses(byte[] jarContent) throws IOException {
+    Map<String, byte[]> classBytes = new HashMap<>();
 
-    /**
-     * Extrait toutes les classes d'un JAR (donné sous forme d'octets).
-     * @return Une Map : "pkg.NomClasse" -> byte[] (bytecode)
-     */
-    public static java.util.Map<String, byte[]> extractClasses(byte[] jarContent) throws IOException {
-        java.util.Map<String, byte[]> classes = new java.util.HashMap<>();
-        
-        try (java.util.jar.JarInputStream jis = new java.util.jar.JarInputStream(new java.io.ByteArrayInputStream(jarContent))) {
-            java.util.jar.JarEntry entry;
-            while ((entry = jis.getNextJarEntry()) != null) {
-                if (!entry.isDirectory() && entry.getName().endsWith(".class")) {
-                    
-                    // 1. Convertir le chemin en nom de classe (ex: "com/foo/Bar.class" -> "com.foo.Bar")
-                    String className = entry.getName()
-                            .replace('/', '.')
-                            .substring(0, entry.getName().length() - 6); // retire ".class"
-                    
-                    // 2. Lire les octets de l'entrée
-                    java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream();
-                    byte[] data = new byte[1024];
-                    int n;
-                    while ((n = jis.read(data, 0, data.length)) != -1) {
-                        buffer.write(data, 0, n);
-                    }
-                    
-                    classes.put(className, buffer.toByteArray());
-                }
+    try (JarInputStream jarInput =
+                 new JarInputStream(new ByteArrayInputStream(jarContent))) {
+
+        JarEntry jarEntry;
+        while ((jarEntry = jarInput.getNextJarEntry()) != null) {
+
+            if (jarEntry.isDirectory() || !jarEntry.getName().endsWith(".class")) {
+                continue;
             }
+
+            String className = jarEntry.getName()
+                    .replace('/', '.')
+                    .substring(0, jarEntry.getName().length() - 6);
+
+            ByteArrayOutputStream classBuffer = new ByteArrayOutputStream();
+            byte[] tempBuffer = new byte[1024];
+            int bytesRead;
+
+            while ((bytesRead = jarInput.read(tempBuffer)) != -1) {
+                classBuffer.write(tempBuffer, 0, bytesRead);
+            }
+
+            classBytes.put(className, classBuffer.toByteArray());
         }
-        return classes;
     }
+
+    return classBytes;
+}
+
 }

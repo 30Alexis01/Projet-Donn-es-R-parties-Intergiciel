@@ -8,31 +8,20 @@ import java.net.Socket;
 import platform.common.MigrationHeader;
 import platform.common.Node;
 
-/**
- * AgentSender = la "poste".
- * Ouvre une socket vers un AgentServer et envoie :
- * Header -> JAR -> DATA
- */
+
+ //Ouvre une socket vers un AgentServer et envoie : Header , JAR , data
 public class AgentSender {
 
-    /** Magic + version du protocole (tu peux changer, mais il faut être cohérent serveur/client) */
+    //Magic pour vérifier que c'est bien un agent que le serveur reçoit
     public static final int PROTOCOL_MAGIC = MigrationHeader.magicFromString("AGNT");
-    public static final int PROTOCOL_VERSION = 1;
 
-    /**
-     * Envoie un agent vers un node cible.
-     *
-     * @param target destination (host,port)
-     * @param jarBytes le JAR contenant le code (bytes)
-     * @param dataBytes l'objet agent sérialisé (bytes)
-     * @param mainClassName nom de la classe principale de l'agent (pratique pour debug)
-     */
+    
+    //Envoie un agent vers un node cible.
     public static void send(Node target, byte[] jarBytes, byte[] dataBytes, String mainClassName) throws IOException {
 
         // 1) Construire le header (structure logique)
         MigrationHeader header = new MigrationHeader(
                 PROTOCOL_MAGIC,
-                PROTOCOL_VERSION,
                 jarBytes.length,
                 dataBytes.length,
                 mainClassName
@@ -45,20 +34,19 @@ public class AgentSender {
             // Buffered pour éviter d'envoyer trop petit morceau par morceau
             DataOutputStream out = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 
-            // 3) Envoyer le header (ordre IMPORTANT)
+            // Envoyer le header qui contient les informations sur ce que va contenir l'agent
             out.writeInt(header.magic);
-            out.writeInt(header.version);
             out.writeInt(header.jarSize);
             out.writeInt(header.dataSize);
             out.writeUTF(header.mainClassName != null ? header.mainClassName : "");
 
-            // 4) Envoyer le JAR
+            //Envoyer le JAR
             out.write(jarBytes);
 
-            // 5) Envoyer les DATA (agent sérialisé)
+            // Envoyer les DATA
             out.write(dataBytes);
 
-            // 6) Forcer l'envoi
+            //Forcer l'envoi vers le socket
             out.flush();
 
         } finally {

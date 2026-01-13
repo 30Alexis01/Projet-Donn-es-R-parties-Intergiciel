@@ -18,11 +18,11 @@ public class ClientMain {
     // Le verrou partagé avec l'Agent pour la synchronisation (wait/notify)
     public static final Object lock = new Object();
     
-    // NOUVEAU : La "boîte aux lettres" statique.
+   
     // L'agent clone qui revient déposera ses données ici.
     public static byte[] receivedData = null; 
 
-    // CONFIGURATION
+
     private static final String SERVER_IP = "127.0.0.1"; 
     private static final int SERVER_PORT = 2000;
     
@@ -32,19 +32,17 @@ public class ClientMain {
     public static void main(String[] args) throws Exception {
         System.out.println("=== BENCHMARK AGENT (SCENARIO ZIP) ===");
 
-        // 1. Préparation Client (Serveur de retour)
+        
         int myPort = 2001;
         Node myNode = new Node("127.0.0.1", myPort);
-        new AgentServer(myNode.host, myNode.port).start();
+        new AgentServer(myNode.host, myNode.port).start();//on créé notre propre serveur pour récupérer l'agent
 
-        // 2. Préparation du dossier de destination
+        
         File destDir = new File(DEST_DIR);
         if (!destDir.exists()) destDir.mkdirs();
 
-        // 3. Chargement du code (Jar)
         byte[] code = JarUtils.loadJar("agents/test-agent.jar");
 
-        // 4. Définition des paliers de test
         int[] steps = {1,1,1,1,2,3,4,5,6,7,8,9 ,10, 15,20, 30, 40, 50, 100}; 
 
         System.out.println("NB_FICHIERS;TEMPS_TOTAL_MS");
@@ -56,26 +54,25 @@ public class ClientMain {
                 filesToFetch.add("doc_" + i + ".txt");
             }
 
-            // IMPORTANT : On vide la boîte aux lettres avant chaque nouvel envoi
+            //on vide avant le prochain envoi
             receivedData = null;
 
             long start = System.nanoTime();
 
-            // A. Initialisation Agent
+            // Initialisation HAgentmon
             ZipAgent agent = new ZipAgent(filesToFetch);
-            agent.init("JamesBond-" + nbFiles, myNode);
+            agent.init("HAgent-Mhagicmon" + nbFiles, myNode);//on lui donne l'adresse du noued de départ pour qu'il puisse rentrer
             agent.setJarBytes(code);
 
-            // B. Envoi
+            // Envoi
             agent.move(new Node(SERVER_IP, SERVER_PORT));
 
-            // C. Attente du retour
+            //Attente du retour
             synchronized (lock) {
                 lock.wait();
             }
 
-            // D. Récupération & Décompression
-            // CORRECTION : On lit la variable statique, pas l'objet agent local
+            // Récupération & Décompression
             byte[] zipData = receivedData; 
 
             if (zipData != null) {
@@ -84,12 +81,12 @@ public class ClientMain {
                 System.err.println("ERREUR : Pas de données reçues pour " + nbFiles + " fichiers !");
             }
 
-            // --- FIN CHRONO ---
+           //on a dézippé, on arrête le temps
             long end = System.nanoTime();
             
-            System.out.println(nbFiles + ";" + (end - start) / 1_000_000);
+            System.out.println("nbFiles : "+nbFiles + "; Chrono :" +" "+ (end - start) / 1000000);
             
-            Thread.sleep(500);
+            Thread.sleep(200);
         }
         
         System.out.println("Fin du benchmark.");

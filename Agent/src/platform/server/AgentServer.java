@@ -11,11 +11,8 @@ import java.util.Map;
 import platform.agent.Agent;
 import platform.common.MigrationHeader;
 import platform.common.ProtocolException;
-import platform.transport.JarUtils; // Assure-toi d'avoir implémenté extractClasses ici
+import platform.transport.JarUtils;
 
-/**
- * Serveur d'agents complet (Étapes D + E + F).
- */
 public class AgentServer {
 
     private final String host;
@@ -146,11 +143,9 @@ public class AgentServer {
         }
     }
 
-    // --- Méthodes Utilitaires (Celles qui manquaient !) ---
 
     private MigrationHeader readHeader(DataInputStream in) throws IOException, ProtocolException {
         int magic = in.readInt();
-        int version = in.readInt();
         int jarSize = in.readInt();
         int dataSize = in.readInt();
         String mainClassName = in.readUTF();
@@ -159,7 +154,7 @@ public class AgentServer {
             throw new ProtocolException("Bad magic: " + magic);
         }
         
-        return new MigrationHeader(magic, version, jarSize, dataSize, mainClassName);
+        return new MigrationHeader(magic, jarSize, dataSize, mainClassName);
     }
 
     private byte[] readFully(DataInputStream in, int length) throws IOException {

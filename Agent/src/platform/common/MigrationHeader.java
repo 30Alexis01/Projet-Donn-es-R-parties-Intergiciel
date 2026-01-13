@@ -21,8 +21,6 @@ public class MigrationHeader implements Serializable {
     /** Signature du protocole (ex: 'A''G''N''T') */
     public final int magic;
 
-    /** Version du protocole (ex: 1) */
-    public final int version;
 
     /** Taille du JAR en octets */
     public final int jarSize;
@@ -33,9 +31,8 @@ public class MigrationHeader implements Serializable {
     /** Nom de la classe principale de l'agent (optionnel mais pratique) */
     public final String mainClassName;
 
-    public MigrationHeader(int magic, int version, int jarSize, int dataSize, String mainClassName) {
+    public MigrationHeader(int magic, int jarSize, int dataSize, String mainClassName) {
         this.magic = magic;
-        this.version = version;
         this.jarSize = jarSize;
         this.dataSize = dataSize;
         this.mainClassName = mainClassName;
@@ -44,7 +41,6 @@ public class MigrationHeader implements Serializable {
     @Override
     public String toString() {
         return "MigrationHeader{magic=" + magic
-                + ", version=" + version
                 + ", jarSize=" + jarSize
                 + ", dataSize=" + dataSize
                 + ", mainClassName='" + mainClassName + "'}";

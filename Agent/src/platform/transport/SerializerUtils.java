@@ -5,10 +5,9 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
-/**
- * Outils pour sérialiser un objet Java (ici l'Agent) en byte[].
- * On ne fait que la sérialisation côté envoi.
- */
+
+ //Outils pour sérialiser l'Agent en byte[].
+
 public class SerializerUtils {
 
     /**

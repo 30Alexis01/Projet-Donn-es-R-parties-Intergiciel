@@ -7,70 +7,61 @@ import java.util.List;
 
 public class ClientRMIFiles {
 
-    // === CONFIGURATION CLIENT ===
-    private static final String SERVER_IP = "127.0.0.1"; // Doit correspondre à ServerMain
-    private static final int SERVER_PORT = 1099;
-    
-    // Dossier de réception (pour être équitable avec l'Agent qui écrit sur disque)
-    private static final String DEST_DIR = "client_results_rmi";
-
     public static void main(String[] args) {
-        try {
-            System.out.println("=== BENCHMARK RMI (SCENARIO FICHIERS) ===");
+        System.out.println(" RMI SCENARIO FICHIERS");
 
-            // 1. Préparation du dossier de réception
-            File destDir = new File(DEST_DIR);
-            if (!destDir.exists()) destDir.mkdirs();
+        String server1Ip = "172.22.223.116";
+        int rmiPort1 = 2003;
 
-            // 2. Connexion au registre
-            Registry registry = LocateRegistry.getRegistry(SERVER_IP, SERVER_PORT);
-            
-            // 3. Récupération du stub du service fichier
-            RemoteFileService service = (RemoteFileService) registry.lookup("FileServiceRMI");
+        // Dossiers de réception
+        String destDir1 = "client_results_rmi_srv1";
 
-            // 4. Benchmark
-            int[] steps = {1, 10, 50, 100};
-            System.out.println("NB_FICHIERS;TEMPS_TOTAL_MS");
+        // Même steps que ton ClientMain
+        int[] steps = {1, 1, 1, 1, 10, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 50000, 100000};
 
-            for (int nbFiles : steps) {
-                
-                // Préparation de la liste des noms (doc_0.txt, doc_1.txt...)
+        for (int n : steps) {
+            try {
+                // Préparation des dossiers
+                File d1 = new File(destDir1);
+                if (!d1.exists()) d1.mkdirs();
+
+
+                // Connexion registre + récupération des stubs (comme ton ClientMain)
+                Registry reg1 = LocateRegistry.getRegistry(server1Ip, rmiPort1);
+                RemoteFileService service1 = (RemoteFileService) reg1.lookup("FileServiceRMI");
+
+                service1.printServer("Je suis dans le serveur" + server1Ip +"au step " + n);
+
+
+                // Préparation des noms de fichiers à récupérer 
                 List<String> filesToFetch = new ArrayList<>();
-                for (int i = 0; i < nbFiles; i++) {
+                for (int i = 0; i < n; i++) {
                     filesToFetch.add("doc_" + i + ".txt");
                 }
 
                 long start = System.nanoTime();
 
-                // --- BOUCLE RMI ---
-                // On doit faire 1 appel réseau par fichier
                 for (String fileName : filesToFetch) {
                     try {
-                        // A. Téléchargement (Réseau)
-                        byte[] data = service.downloadFile(fileName);
-                        
-                        // B. Écriture (Disque)
-                        File target = new File(destDir, fileName);
-                        try (FileOutputStream fos = new FileOutputStream(target)) {
-                            fos.write(data);
-                        }
+                        byte[] data = service1.downloadFile(fileName);
+
+                        File target = new File(d1, fileName);
+                        FileOutputStream fos = new FileOutputStream(target);
+                        fos.write(data);
+                        fos.close();
                     } catch (Exception e) {
-                        System.err.println("Erreur sur " + fileName + ": " + e.getMessage());
+                        System.err.println("Erreur srv1 sur " + fileName + " : " + e.getMessage());
                     }
                 }
-                // ------------------
 
-                long end = System.nanoTime();
-                System.out.println(nbFiles + ";" + (end - start) / 1_000_000);
                 
-                // Pause pour laisser le système respirer
-                Thread.sleep(500);
+                long end = System.nanoTime();
+
+                System.out.println("Nombre de fichiers : " + n + " -> temps : " + (end - start) / 1_000_000);
+
+            } catch (Exception e) {
+                System.err.println("Erreur RMI (" + n + ") : " + e.getMessage());
             }
-
-            System.out.println("Fin du benchmark RMI.");
-
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 }

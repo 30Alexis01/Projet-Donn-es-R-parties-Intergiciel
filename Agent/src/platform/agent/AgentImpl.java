@@ -16,8 +16,9 @@ public abstract class AgentImpl implements Agent {
     protected Node origin;
     protected transient Hashtable<String, Object> nameServer;
     
-    // Le code (JAR) pour la migration
+    // Le code jar pour la migration
     protected transient byte[] jarBytes;
+
 
     public void setJarBytes(byte[] jarBytes) {
         this.jarBytes = jarBytes;
@@ -62,7 +63,7 @@ public abstract class AgentImpl implements Agent {
     @Override
     public abstract void main() throws MoveException;
 
-    // --- CES GETTERS SONT OBLIGATOIRES POUR PINGPONGAGENT ---
+    
     public String getName() {
         return name;
     }

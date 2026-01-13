@@ -1,7 +1,7 @@
 package agents;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -24,9 +24,9 @@ public class ZipAgent extends AgentImpl {
     @Override
     public void main() throws MoveException {
         if (!hasFinishedWork) {
-            // === CAS 1 : SUR LE SERVEUR DISTANT ===
+            //serveur distant
             try {
-                FileService fs = (FileService) getNameServer().get("FileService");
+                FileService fs = (FileService) getNameServer().get("FileService");//on cast direct l'objet
                 if (fs == null) {
                     System.err.println("Erreur: FileService absent sur le serveur !");
                     return; 
@@ -47,7 +47,7 @@ public class ZipAgent extends AgentImpl {
                     }
                 }
                 
-                // On stocke le ZIP dans l'objet (pour le voyage retour)
+                // On stocke le ZIP dans l'objet pour le retour (en gros, on transforme en tableau d'octets pour que l'agent puisse voyager avec)
                 this.compressedData = baos.toByteArray();
                 this.hasFinishedWork = true;
                 
@@ -58,13 +58,11 @@ public class ZipAgent extends AgentImpl {
             }
 
         } else {
-            // === CAS 2 : RETOUR CHEZ LE CLIENT ===
+            // back
             
-            // 1. Livraison du colis
             // On dépose les données dans la variable statique du Client
             ClientMain.receivedData = this.compressedData;
 
-            // 2. Notification
             // On réveille le ClientMain qui dort sur le lock
             synchronized (ClientMain.lock) {
                 ClientMain.lock.notify();

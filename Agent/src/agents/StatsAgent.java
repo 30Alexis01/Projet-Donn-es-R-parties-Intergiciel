@@ -8,16 +8,14 @@ import java.util.LinkedList;
 
 public class StatsAgent extends AgentImpl {
 
-    // --- CONFIG ---
+    
     private int maxLinesToRead = 10;
-    
-    // --- ÉTAT ---
     private long totalCount = 0;
-    
-    // NOUVEL ÉTAT : Permet de savoir si on vient d'arriver à la maison
+
+    //si l'agent rentre sur son noeud de départ
     private boolean returning = false; 
 
-    // File d'attente des étapes SUIVANTES
+    // File d'attente des étapes 
     private LinkedList<Node> itinerary = new LinkedList<>();
 
     public StatsAgent() {}
@@ -27,42 +25,43 @@ public class StatsAgent extends AgentImpl {
     @Override
     public void main() throws MoveException {
         
-        // ==================================================
-        // PHASE 1 : ARRIVÉE À LA MAISON (FIN DE MISSION)
-        // ==================================================
+        //cas où l'agent rentre
         if (returning) {
             // Si 'returning' est vrai, c'est qu'on vient d'exécuter back() et qu'on est arrivés.
             try {
-                // On réveille le ClientMain via Réflexion
-                Class<?> clazz = Class.forName("apps.client.ClientMain");
-                java.lang.reflect.Field lockField = clazz.getField("lock");
-                Object lock = lockField.get(null);
                 
-                System.out.println(">>> AGENT RENTRÉ AVEC SUCCÈS ! TOTAL = " + totalCount);
+                Class<?> clazz = Class.forName("apps.client.ClientMain");//pour éviter de faire des imports et garder notre agent indépendant
+                //charge la classe ClientMain en mémoire (dans clazz)
+                java.lang.reflect.Field lockField = clazz.getField("lock");
+                //on récupère le champ lock
+                Object lock = lockField.get(null);
+                //récupère la valeur du lock
+                System.out.println("AGENT RENTRÉ AVEC SUCCÈS ! TOTAL = " + totalCount);
                 
                 synchronized (lock) {
                     lock.notify();
                 }
+                //prend le lock et reveille le client
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            return; // Arrêt complet de l'agent
+            return; 
         }
 
-        // ==================================================
-        // PHASE 2 : TRAVAIL (Sur un serveur distant)
-        // ==================================================
-        System.out.println("[" + getName() + "] Je travaille sur " + getNameServer().toString()); // Debug simple
+        //cas où l'agent n'est pas en train de revenir
+        System.out.println("[" + getName() + "] Je travaille sur " + getNameServer().toString()); 
         
         try {
-            // On tente de récupérer le service, mais on ne plante pas si absent
-            Object serviceObj = getNameServer().get("NameService");
+            // On tente de récupérer le service
+            Object serviceObj = getNameServer().get("NameService");//on récupère l'objet "NameService" dans l'annuaire
             if (serviceObj instanceof NameService) {
                 NameService service = (NameService) serviceObj;
                 long subTotal = 0;
                 for (int i = 0; i < maxLinesToRead; i++) {
                     subTotal += service.getCountByLine(i);
                 }
+                //utilise le service récupéré
                 totalCount += subTotal;
             } else {
                 System.out.println("   -> Pas de NameService ici, je continue.");
@@ -71,19 +70,17 @@ public class StatsAgent extends AgentImpl {
             System.err.println("   -> Erreur durant le travail : " + e.getMessage());
         }
 
-        // ==================================================
-        // PHASE 3 : NAVIGATION
-        // ==================================================
+        //navigation
         if (!itinerary.isEmpty()) {
             // S'il reste des étapes, on y va
             Node nextHop = itinerary.removeFirst();
             System.out.println("[" + getName() + "] Je pars vers l'étape suivante : " + nextHop.host);
             move(nextHop);
         } else {
-            // Plus d'étape ? C'est l'heure de rentrer.
+            // Plus d'étapes
             System.out.println("[" + getName() + "] Itinéraire terminé. RETOUR BASE (" + getOrigin().host + ":" + getOrigin().port + ")");
             
-            // IMPORTANT : On change l'état AVANT de partir
+            // On change l'état avant de partir
             this.returning = true;
             
             // On rentre à l'origine (définie par agent.init() dans ClientMain)
