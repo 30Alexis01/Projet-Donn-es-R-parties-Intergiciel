@@ -10,14 +10,14 @@ public class ClientRMIFiles {
     public static void main(String[] args) {
         System.out.println(" RMI SCENARIO FICHIERS");
 
-        String server1Ip = "172.22.223.116";
+        String server1Ip = "localhost";
         int rmiPort1 = 2003;
 
         // Dossiers de réception
         String destDir1 = "client_results_rmi_srv1";
 
         // Même steps que ton ClientMain
-        int[] steps = {1, 1, 1, 1, 10, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 50000, 100000};
+        int[] steps = {1, 1, 1, 1, 10, 50, 100};
 
         for (int n : steps) {
             try {
@@ -57,7 +57,7 @@ public class ClientRMIFiles {
                 
                 long end = System.nanoTime();
 
-                System.out.println("Nombre de fichiers : " + n + " -> temps : " + (end - start) / 1_000_000);
+                System.out.println("Nombre de fichiers : " + n + " -> temps : " + (end - start) / 1000000 + "ms");
 
             } catch (Exception e) {
                 System.err.println("Erreur RMI (" + n + ") : " + e.getMessage());

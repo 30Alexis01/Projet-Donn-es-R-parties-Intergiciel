@@ -4,7 +4,7 @@ import java.rmi.registry.Registry;
 public class ServerMain {
     public static void main(String[] args) {
         try {
-            String ipServeur = "127.0.0.1"; 
+            String ipServeur = "localhost"; 
             int port = 2003;
             
             String csvPath = "data/prenoms.csv";     
