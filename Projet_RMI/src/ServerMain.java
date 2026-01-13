@@ -4,8 +4,8 @@ import java.rmi.registry.Registry;
 public class ServerMain {
     public static void main(String[] args) {
         try {
-            String ipServeur = "localhost"; 
-            int port = Integer.parseInt(args[0]);
+            String ipServeur = args[0]; 
+            int port = Integer.parseInt(args[1]);
             
             String csvPath = "data/prenoms.csv";     
             String filesPath = "server_files";      
