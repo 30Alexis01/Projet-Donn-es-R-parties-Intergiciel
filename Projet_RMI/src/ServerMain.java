@@ -4,48 +4,36 @@ import java.rmi.registry.Registry;
 public class ServerMain {
     public static void main(String[] args) {
         try {
-            System.out.println("=== SERVEUR RMI (Configuration en dur) ===");
-
-            // ==========================================
-            // 1. CONFIGURATION EN DUR
-            // ==========================================
+            // === CONFIGURATION ===
+            // Adresse IP de ce serveur (à modifier selon ta machine)
+            String ipServeur = "127.0.0.1"; // ou "172.22...."
+            int port = 2003;
             
-            // L'IP de la machine où tourne CE serveur.
-            // Si c'est ton PC : "192.168.1.20"
-            // Si c'est le PC de l'ami 1 : "192.168.1.50"
-            String publicIp = "172.22.220.103"; 
+            String csvPath = "data/prenoms.csv";     // Ton dossier CSV existant
+            String filesPath = "server_files";       // Ton dossier de fichiers (à la racine)
 
-            // Port RMI standard (doit correspondre au client)
-            int port = 1099;
+            // Configuration RMI pour que le client puisse nous contacter
+            System.setProperty("java.rmi.server.hostname", ipServeur);
 
-            // Chemin du fichier CSV (relatif au dossier d'exécution)
-            // Si tu lances depuis la racine du projet, c'est peut-être "data/prenoms.csv"
-            String csvPath = "data/prenoms.csv"; 
-
-            // ==========================================
-            // 2. DÉMARRAGE
-            // ==========================================
-
-            // IMPORTANT : Force RMI à utiliser cette IP pour les stubs
-            // (Sinon il risque de donner 127.0.0.1 ou une IP locale injoignable par l'extérieur)
-            System.setProperty("java.rmi.server.hostname", publicIp);
-
-            // Création du registre RMI
+            // 1. Démarrage de l'annuaire RMI (Registry)
             Registry registry = LocateRegistry.createRegistry(port);
+            System.out.println("Registre RMI démarré sur le port " + port);
 
-            // Chargement du service
-            NameService service = new NameServiceImpl(csvPath);
+            // 2. Service 1 : CSV (Existant)
+            // (Assure-toi que NameServiceImpl est bien importé ou dans le même package)
+            NameService nameService = new NameServiceImpl(csvPath);
+            registry.rebind("NameService", nameService);
+            System.out.println("Service 'NameService' (CSV) enregistré.");
 
-            // Enregistrement dans l'annuaire
-            registry.rebind("NameService", service);
+            // 3. Service 2 : Fichiers (Nouveau)
+            RemoteFileService fileService = new RemoteFileServiceImpl(filesPath);
+            registry.rebind("FileServiceRMI", fileService);
+            System.out.println("Service 'FileServiceRMI' (Fichiers) enregistré.");
 
             System.out.println(">> Serveur prêt !");
-            System.out.println(">> IP exposée : " + publicIp);
-            System.out.println(">> Port       : " + port);
-            System.out.println(">> Fichier CSV: " + csvPath);
 
         } catch (Exception e) {
-            System.err.println("Erreur au démarrage du serveur :");
+            System.err.println("Erreur serveur :");
             e.printStackTrace();
         }
     }
