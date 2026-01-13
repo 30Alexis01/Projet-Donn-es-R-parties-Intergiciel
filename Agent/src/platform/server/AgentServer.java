@@ -79,16 +79,15 @@ public class AgentServer {
         ) {
             // 1. Header
             MigrationHeader header = readHeader(in);
-            System.out.println("----- Migration reçue -----");
-            System.out.println(header);
+           
+            
 
             // 2. Jar
             byte[] jarBytes = readFully(in, header.jarSize);
-            System.out.println("Jar reçu : " + jarBytes.length + " octets");
-
+            
             // 3. Data
             byte[] dataBytes = readFully(in, header.dataSize);
-            System.out.println("Data reçues : " + dataBytes.length + " octets");
+          
 
             // 4. Délégation à l'intelligence
             processAgent(header, jarBytes, dataBytes);
@@ -103,8 +102,7 @@ public class AgentServer {
 
     private void processAgent(MigrationHeader header, byte[] jarBytes, byte[] dataBytes) {
         try {
-            System.out.println("-> Instanciation de l'agent : " + header.mainClassName);
-
+           
             // A. Extraction des classes
             Map<String, byte[]> classes = JarUtils.extractClasses(jarBytes);
 
@@ -126,8 +124,6 @@ public class AgentServer {
                 ((platform.agent.AgentImpl) agent).setJarBytes(jarBytes);
             }
 
-            // E. Lancement
-            System.out.println("   Lancement de l'agent...");
             new Thread(() -> {
                 try {
                     agent.main();

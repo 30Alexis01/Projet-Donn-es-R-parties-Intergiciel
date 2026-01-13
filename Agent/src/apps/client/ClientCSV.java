@@ -37,19 +37,17 @@ public class ClientCSV {
         for (int n : steps) {
             long start = System.nanoTime();
 
-            // 3. Initialisation de l'agent CSV (StatsAgent)
+            // Initialisation de l'agent CSV (StatsAgent)
             StatsAgent agent = new StatsAgent();
             agent.init("Analyste-" + n, myNode);
-            // On suppose que ton StatsAgent a cette méthode (sinon adapte selon ton code original)
-            // Si StatsAgent n'existe plus, il faudra le recréer !
             agent.setMaxLines(n); 
             
-            agent.setJarBytes(code);
+            agent.setJarBytes(code);//on donne son code à l'agent
             
-            // 4. Envoi
+            // Envoi
             agent.move(new Node(SERVER_IP, SERVER_PORT));
 
-            // 5. Attente
+            // Attente
             synchronized (lock) {
                 lock.wait();
             }

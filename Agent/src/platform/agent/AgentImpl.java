@@ -16,9 +16,8 @@ public abstract class AgentImpl implements Agent {
     protected Node origin;
     protected transient Hashtable<String, Object> nameServer;
     
-    // Le code jar pour la migration
+    // Le code (JAR) pour la migration
     protected transient byte[] jarBytes;
-
 
     public void setJarBytes(byte[] jarBytes) {
         this.jarBytes = jarBytes;
@@ -52,7 +51,8 @@ public abstract class AgentImpl implements Agent {
             throw new MoveException("Impossible de migrer : je n'ai pas mon code (jarBytes) !");
         }
         try {
-            System.out.println("Migration vers " + target + "...");
+           
+            
             byte[] dataBytes = SerializerUtils.serialize(this);
             AgentSender.send(target, this.jarBytes, dataBytes, this.getClass().getName());
         } catch (IOException e) {
@@ -63,7 +63,6 @@ public abstract class AgentImpl implements Agent {
     @Override
     public abstract void main() throws MoveException;
 
-    
     public String getName() {
         return name;
     }
