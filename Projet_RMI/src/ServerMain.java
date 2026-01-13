@@ -15,7 +15,7 @@ public class ServerMain {
             Registry registry = LocateRegistry.createRegistry(port);
             System.out.println("Registre RMI démarré sur le port " + port);
 
-            NameService nameService = new NameServiceImpl(csvPath);
+            CSVService nameService = new CSVServiceImpl(csvPath);
             registry.rebind("NameService", nameService);
             System.out.println("Service 'NameService' (CSV) enregistré.");
 

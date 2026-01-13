@@ -27,4 +27,9 @@ public class RemoteFileServiceImpl extends UnicastRemoteObject implements Remote
             throw new RemoteException("Erreur lecture fichier: " + fileName, e);
         }
     }
+
+    @Override
+    public void printServer(String message ) throws RemoteException{
+        System.out.println(message);
+    }
 }

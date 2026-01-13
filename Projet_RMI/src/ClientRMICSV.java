@@ -1,7 +1,7 @@
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
-public class ClientMain {
+public class ClientRMICSV {
     public static void main(String[] args) {
         System.out.println(" RMI SCENARIO CSV");
 
@@ -21,12 +21,12 @@ public class ClientMain {
             try {
                 long total = 0;
                 Registry reg1 = LocateRegistry.getRegistry(server1Ip, rmiPort1);
-                NameService service1 = (NameService) reg1.lookup("NameService");
+                CSVService service1 = (CSVService) reg1.lookup("NameService");
 
                 service1.printServer("Je suis dans le serveur" + server1Ip +"au step " + n);
 
                 Registry reg2 = LocateRegistry.getRegistry(server2Ip, rmiPort2);
-                NameService service2 = (NameService) reg2.lookup("NameService");
+                CSVService service2 = (CSVService) reg2.lookup("NameService");
 
                 service2.printServer("Je suis dans le serveur" + server2Ip + "au step " + n );
 

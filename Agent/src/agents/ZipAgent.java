@@ -9,7 +9,7 @@ import java.util.zip.ZipOutputStream;
 import platform.agent.AgentImpl;
 import platform.common.MoveException;
 import platform.service.FileService;
-import apps.client.ClientMain; // Import pour accéder à la variable statique
+import apps.client.ClientFile; // Import pour accéder à la variable statique
 
 public class ZipAgent extends AgentImpl {
 
@@ -61,11 +61,11 @@ public class ZipAgent extends AgentImpl {
             // back
             
             // On dépose les données dans la variable statique du Client
-            ClientMain.receivedData = this.compressedData;
+            ClientFile.receivedData = this.compressedData;
 
             // On réveille le ClientMain qui dort sur le lock
-            synchronized (ClientMain.lock) {
-                ClientMain.lock.notify();
+            synchronized (ClientFile.lock) {
+                ClientFile.lock.notify();
             }
         }
     }

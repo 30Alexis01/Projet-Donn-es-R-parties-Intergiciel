@@ -1,7 +1,7 @@
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
-public interface NameService extends Remote {
+public interface CSVService extends Remote {
     // Renvoie le nombre de ligne du fichier csv
     int getNbLines() throws RemoteException;
 
