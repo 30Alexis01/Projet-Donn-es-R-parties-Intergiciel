@@ -7,6 +7,8 @@ import java.util.List;
 
 public class NameServiceImpl extends UnicastRemoteObject implements NameService {
 
+
+    //Liste qui va contenir toute la colonne "nombre" du CSV
     private final List<Integer> counts = new ArrayList<>();
 
     public NameServiceImpl(String csvPath) throws RemoteException {
@@ -15,27 +17,22 @@ public class NameServiceImpl extends UnicastRemoteObject implements NameService 
     }
 
     private void loadCsv(String csvPath) throws RemoteException {
-        try (BufferedReader br = new BufferedReader(new FileReader(csvPath))) {
-            String line;
+    try {
+        BufferedReader br = new BufferedReader(new FileReader(csvPath));
+        br.readLine(); 
 
-            br.readLine(); // Skip header (comme CsvNameService)
-
-            while ((line = br.readLine()) != null) {
-                String[] parts = line.split(";");
-                if (parts.length < 4) continue;
-
-                try {
-                    // Comme CsvNameService : on parse juste la colonne "nombre"
-                    int count = Integer.parseInt(parts[3].trim());
-                    counts.add(count);
-                } catch (Exception e) {
-                    // Ignorer erreurs (comme CsvNameService)
-                }
-            }
-        } catch (Exception e) {
-            throw new RemoteException("Erreur chargement CSV", e);
+        //On remplit counts avec uniquement la colonne nombre de notre fichier CSV
+        String line;
+        while ((line = br.readLine()) != null) {
+            counts.add(Integer.parseInt(line.split(";")[3]));
         }
+
+        br.close();
+    } catch (Exception e) {
+        throw new RemoteException("Erreur lecture CSV");
     }
+}
+
 
     @Override
     public int getNbLines() throws RemoteException {
@@ -48,5 +45,10 @@ public class NameServiceImpl extends UnicastRemoteObject implements NameService 
             return 0;
         }
         return counts.get(lineNumber);
+    }
+
+    @Override
+    public void printServer(String message ) throws RemoteException{
+        System.out.println(message);
     }
 }
