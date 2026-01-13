@@ -18,8 +18,7 @@ public class LocalFileService implements FileService {
         // Construction du chemin complet
         File file = new File(rootDirectory, fileName);
         
-        System.out.println("[LocalFileService] Lecture demandée : " + file.getAbsolutePath());
-
+  
         if (!file.exists()) {
             throw new IOException("Fichier introuvable : " + fileName);
         }

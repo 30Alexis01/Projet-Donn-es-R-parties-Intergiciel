@@ -5,13 +5,13 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NameServiceImpl extends UnicastRemoteObject implements NameService {
+public class CSVServiceImpl extends UnicastRemoteObject implements CSVService {
 
 
     //Liste qui va contenir toute la colonne "nombre" du CSV
     private final List<Integer> counts = new ArrayList<>();
 
-    public NameServiceImpl(String csvPath) throws RemoteException {
+    public CSVServiceImpl(String csvPath) throws RemoteException {
         super();
         loadCsv(csvPath);
     }

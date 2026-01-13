@@ -13,7 +13,7 @@ import platform.common.Node;
 import platform.server.AgentServer;
 import platform.transport.JarUtils;
 
-public class ClientMain {
+public class ClientFile {
     
     // Le verrou partagé avec l'Agent pour la synchronisation (wait/notify)
     public static final Object lock = new Object();
@@ -30,7 +30,7 @@ public class ClientMain {
     private static final String DEST_DIR = "client_results";
 
     public static void main(String[] args) throws Exception {
-        System.out.println("=== BENCHMARK AGENT (SCENARIO ZIP) ===");
+        System.out.println("Agent version CSV");
 
         
         int myPort = 2001;
