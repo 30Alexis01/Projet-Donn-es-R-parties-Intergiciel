@@ -30,7 +30,7 @@ public class StatsAgent extends AgentImpl {
             // Si 'returning' est vrai, c'est qu'on vient d'exécuter back() et qu'on est arrivés.
             try {
                 
-                Class<?> clazz = Class.forName("apps.client.ClientMain");//pour éviter de faire des imports et garder notre agent indépendant
+                Class<?> clazz = Class.forName("apps.client.ClientCSV");//pour éviter de faire des imports et garder notre agent indépendant
                 //charge la classe ClientMain en mémoire (dans clazz)
                 java.lang.reflect.Field lockField = clazz.getField("lock");
                 //on récupère le champ lock

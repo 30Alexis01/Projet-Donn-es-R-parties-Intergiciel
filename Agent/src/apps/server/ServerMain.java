@@ -3,15 +3,7 @@ package apps.server;
 import platform.server.AgentServer;
 import platform.service.NameService;
 
-/**
- * Point d'entrée du serveur "Agents".
- * Lance uniquement :
- * - un AgentServer
- * - avec le service NameService (CsvNameService)
- * - avec le service FileService (LocalFileService) POUR LE SCÉNARIO ZIP
- *
- * Configuration via attributs ci-dessous (pas via args).
- */
+
 public class ServerMain {
 
     private static final String LISTEN_IP = "localhost";
@@ -28,20 +20,16 @@ public class ServerMain {
         try {
             System.out.println("Démarrage du serveur Agents ");
             System.out.println("Listen IP : " + LISTEN_IP);
-            System.out.println("Port      : " + AGENT_PORT);
+            System.out.println("Port      : " + Integer.parseInt(args[0]));
         
 
-            // 1) Charger les services locaux
             // Service existant (CSV)
             NameService csvService = new CsvNameService(CSV_PATH);
             
-            // NOUVEAU : Service Fichiers (Lecture disque)
             LocalFileService fileService = new LocalFileService(FILES_PATH);
 
-            // 2) Démarrer le serveur d'agents
-            AgentServer server = new AgentServer(LISTEN_IP, AGENT_PORT);
+            AgentServer server = new AgentServer(LISTEN_IP, Integer.parseInt(args[0]));
 
-            // 3) Injecter les services dans l'annuaire
             // L'agent pourra les récupérer via agent.getNameServer().get("Clé")
             server.getNameServer().put(SERVICE_NAME_CSV, csvService);
             server.getNameServer().put(SERVICE_NAME_FILE, fileService);

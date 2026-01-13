@@ -5,14 +5,14 @@ public class ClientRMICSV {
     public static void main(String[] args) {
         System.out.println(" RMI SCENARIO CSV");
 
-        String server1Ip = "172.22.223.116"; 
-        String server2Ip = "172.22.223.116"; 
+        String server1Ip = "10.40.17.170"; 
+        String server2Ip = "10.40.17.170"; 
         int rmiPort1 = 2003;
         int rmiPort2 = 2004;
         
         // Répétition de n = 1 pour ignorer l'effet warm up 
         // Le premier appel est plus lent à cause des initialisations (connexion, JVM, cache)
-        int[] steps = {1, 1, 1, 1, 10, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 50000, 100000};
+        int[] steps = {1, 1, 1, 1, 2,2,2,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,7,8,8,9,9,9,9,10,10,11,12,13,14,15,16,18,20,30,40, 50, 100, 200, 500, 1000, 2000, 5000};
         
 
         for (int n : steps) {
@@ -45,7 +45,7 @@ public class ClientRMICSV {
                 long end = System.nanoTime(); 
                
 
-                System.out.println("Nombre de requête : " + n + "-> temps : " + (end - start)/1000000);
+                System.out.println("Nombre de requête : " + n + "-> temps : " + (end - start)/1000000 + "total : "+total);
                 
             } catch (Exception e) {
                 System.err.println("Erreur RMI (" + n + ") : " + e.getMessage());

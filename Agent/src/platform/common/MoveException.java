@@ -1,12 +1,7 @@
 package platform.common;
 
-/**
- * Exception levée quand un déplacement d'agent échoue.
- * Exemples:
- * - impossible de se connecter au node cible
- * - erreur d'envoi
- * - erreur protocole
- */
+// Exception levée quand un déplacement d'agent échoue.
+
 public class MoveException extends Exception {
 
     private static final long serialVersionUID = 1L;

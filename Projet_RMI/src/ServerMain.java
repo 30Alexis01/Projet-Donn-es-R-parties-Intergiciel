@@ -5,7 +5,7 @@ public class ServerMain {
     public static void main(String[] args) {
         try {
             String ipServeur = "localhost"; 
-            int port = 2003;
+            int port = Integer.parseInt(args[0]);
             
             String csvPath = "data/prenoms.csv";     
             String filesPath = "server_files";      
