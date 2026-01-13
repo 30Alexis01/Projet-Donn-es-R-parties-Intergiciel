@@ -36,7 +36,7 @@ public class ServerMain {
 
             // 4) Lancer
             server.start();
-            System.out.println(">> [Agent] Serveur prêt sur " + LISTEN_IP + ":" + AGENT_PORT);
+            System.out.println("[Agent] Serveur prêt sur " + LISTEN_IP + ":" + AGENT_PORT);
             System.out.println(">> Services disponibles : " + server.getNameServer().keySet());
 
         } catch (Exception e) {

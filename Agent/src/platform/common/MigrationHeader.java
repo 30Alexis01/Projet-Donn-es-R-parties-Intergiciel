@@ -2,11 +2,8 @@ package platform.common;
 
 import java.io.Serializable;
 
-/**
- * En-tête utilisé lors de la migration d'un agent.
- * Il est envoyé avant le JAR et les données afin que le serveur
- * sache quoi lire ensuite.
- */
+//En-tête utilisé lors de la migration d'un agent.
+
 public class MigrationHeader implements Serializable {
 
     private static final long serialVersionUID = 1L;

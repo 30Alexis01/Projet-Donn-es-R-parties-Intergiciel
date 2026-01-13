@@ -9,39 +9,28 @@ import java.util.Map;
  */
 public class CustomClassLoader extends ClassLoader {
 
-    /**
-     * Cache contenant le bytecode des classes reçues.
-     * Clé : Nom de la classe (ex: "agents.PingPongAgent")
-     * Valeur : Le contenu du fichier .class en tableau d'octets.
-     */
+    //nom de la classe, .class
     private final Map<String, byte[]> classCache;
 
-    /**
-     * Constructeur.
-     * @param parent Le ClassLoader parent (généralement le système, pour charger String, System, etc.)
-     * @param classData La map extraite du JAR contenant le bytecode de l'agent.
-     */
+
     public CustomClassLoader(ClassLoader parent, Map<String, byte[]> classData) {
         super(parent);
         this.classCache = classData;
     }
 
-    /**
-     * Méthode appelée automatiquement par la JVM quand elle cherche une classe
-     * qu'elle ne connait pas encore.
-     */
+    
+     //Méthode appelée automatiquement par la JVM quand elle cherche une classe qu'elle ne connait pas encore.
+
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
-        // 1. On cherche le bytecode dans notre cache (reçu du réseau)
+        // On cherche le bytecode dans notre cache (reçu du réseau)
         byte[] b = classCache.get(name);
 
         if (b == null) {
-            // Si on ne l'a pas, c'est une classe inconnue -> Erreur
             throw new ClassNotFoundException(name);
         }
 
-        // 2. On transforme les octets en "vraie" classe Java
-        // defineClass est une méthode native de ClassLoader qui fait la magie.
+        // On transforme les octets en classe Java
         return defineClass(name, b, 0, b.length);
     }
 }
