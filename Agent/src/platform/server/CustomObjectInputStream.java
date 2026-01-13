@@ -5,10 +5,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamClass;
 
-/**
- * ObjectInputStream personnalisé.
- * Permet de désérialiser un agent en utilisant un ClassLoader spécifique.
- */
+//ObjectInputStream personnalisé.Permet de désérialiser un agent en utilisant un ClassLoader spécifique.
 public class CustomObjectInputStream extends ObjectInputStream {
 
     // ClassLoader qui connaît les classes de l'agent

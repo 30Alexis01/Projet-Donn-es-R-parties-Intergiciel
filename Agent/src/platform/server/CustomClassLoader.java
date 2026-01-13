@@ -2,11 +2,8 @@ package platform.server;
 
 import java.util.Map;
 
-/**
- * Chargeur de classe personnalisé pour les Agents Mobiles.
- * Permet d'isoler chaque agent dans son propre espace de noms et de charger
- * des classes depuis les octets reçus (au lieu du disque local).
- */
+//Chargeur de classe personnalisé pour les Agents Mobiles.Permet d'isoler chaque agent dans son propre espace de noms et de charger des classes depuis les octets reçus (au lieu du disque local).
+ 
 public class CustomClassLoader extends ClassLoader {
 
     //nom de la classe, .class

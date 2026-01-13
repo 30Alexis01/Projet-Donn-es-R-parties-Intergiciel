@@ -23,7 +23,7 @@ public class ClientRMICSV {
                 Registry reg1 = LocateRegistry.getRegistry(server1Ip, rmiPort1);
                 CSVService service1 = (CSVService) reg1.lookup("NameService");
 
-                service1.printServer("Je suis dans le serveur" + server1Ip +"au step " + n);
+                service1.printServer("Je suis dans le serveur" + server1Ip +" au step " + n);
 
                 Registry reg2 = LocateRegistry.getRegistry(server2Ip, rmiPort2);
                 CSVService service2 = (CSVService) reg2.lookup("NameService");
